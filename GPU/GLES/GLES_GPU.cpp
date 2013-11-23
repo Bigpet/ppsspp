@@ -378,7 +378,7 @@ static const CommandTableEntry commandTable[] = {
 
 GLES_GPU::GLES_GPU()
 : resized_(false) {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(USING_GLES2) 
 	lastVsync_ = g_Config.bVSync ? 1 : 0;
 	if (gl_extensions.EXT_swap_control_tear) {
 		// See http://developer.download.nvidia.com/opengl/specs/WGL_EXT_swap_control_tear.txt

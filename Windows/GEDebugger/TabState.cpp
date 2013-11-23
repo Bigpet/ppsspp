@@ -15,6 +15,8 @@
 // Official git repository and contact information can be found at
 // https://github.com/hrydgard/ppsspp and http://www.ppsspp.org/.
 
+#ifndef USING_GLES2
+
 #include "base/basictypes.h"
 #include "Windows/resource.h"
 #include "Windows/InputBox.h"
@@ -764,3 +766,5 @@ TabStateSettings::TabStateSettings(HINSTANCE _hInstance, HWND _hParent)
 TabStateTexture::TabStateTexture(HINSTANCE _hInstance, HWND _hParent)
 	: TabStateValues(stateTextureRows, ARRAY_SIZE(stateTextureRows), (LPCSTR)IDD_GEDBG_TAB_VALUES, _hInstance, _hParent) {
 }
+
+#endif

@@ -20,14 +20,18 @@
 
 #include "Debugger/Debugger_Disasm.h"
 #include "Debugger/Debugger_MemoryDlg.h"
+#ifndef USING_GLES2
 #include "Windows/GEDebugger/GEDebugger.h"
+#endif
 
 #include "Common/CommonWindows.h"
 
 #define MAX_CPUCOUNT 1
 
 extern CDisasm *disasmWindow[MAX_CPUCOUNT];
-extern CGEDebugger *geDebuggerWindow ;
+#ifndef USING_GLES2
+extern CGEDebugger *geDebuggerWindow;
+#endif
 extern CMemoryDlg *memoryWindow[MAX_CPUCOUNT];
 
 extern HMENU g_hPopupMenus;

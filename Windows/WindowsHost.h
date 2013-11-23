@@ -56,12 +56,15 @@ public:
 	void SaveSymbolMap();
 	void SetWindowTitle(const char *message);
 
+#ifndef USING_GLES2
+
 	virtual bool GPUDebuggingActive();
 	virtual void GPUNotifyCommand(u32 pc);
 	virtual void GPUNotifyDisplay(u32 framebuf, u32 stride, int format);
 	virtual void GPUNotifyDraw();
 	virtual void GPUNotifyTextureAttachment(u32 addr);
 	virtual bool GPUAllowTextureCache(u32 addr);
+#endif
 	virtual void ToggleDebugConsoleVisibility();
 
 	virtual bool CanCreateShortcut() {return false;}  // Turn on when fixed

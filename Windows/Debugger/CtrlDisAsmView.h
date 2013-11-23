@@ -22,6 +22,7 @@
 
 #include "Common/CommonWindows.h"
 #include <vector>
+#include <map>
 #include <algorithm>
 
 using std::min;

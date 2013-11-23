@@ -1,4 +1,7 @@
-﻿#include "Windows/GEDebugger/CtrlDisplayListView.h"
+﻿
+#ifndef USING_GLES2
+
+#include "Windows/GEDebugger/CtrlDisplayListView.h"
 #include "Windows/GEDebugger/GEDebugger.h"
 #include "Windows/InputBox.h"
 #include "Windows/Main.h"
@@ -466,3 +469,5 @@ bool CtrlDisplayListView::curAddressIsVisible()
 	u32 windowEnd = windowStart + visibleRows * instructionSize;
 	return curAddress >= windowStart && curAddress < windowEnd;
 }
+
+#endif

@@ -42,7 +42,7 @@
 #include "GPU/GPUInterface.h"
 #include "i18n/i18n.h"
 
-#ifdef _WIN32
+#ifdef _WIN32 
 #include "Windows/W32Util/ShellUtil.h"
 #include "Windows/WndMainWindow.h"
 #endif
@@ -255,6 +255,8 @@ UI::EventReturn GameBrowser::HomeClick(UI::EventParams &e) {
 		path_.SetPath(fileName.toStdString());
 	else
 		return UI::EVENT_DONE;
+#elif defined(_WIN32) && defined(USING_SDL)
+	path_.SetPath(getenv("USERPROFILE"));
 #elif defined(_WIN32)
 	I18NCategory *m = GetI18NCategory("MainMenu");
 	std::string folder = W32Util::BrowseForFolder(MainWindow::GetHWND(), m->T("Choose folder"));
@@ -526,7 +528,7 @@ UI::EventReturn MainScreen::OnLoadFile(UI::EventParams &e) {
 		g_Config.Save();
 		screenManager()->switchScreen(new EmuScreen(fileName.toStdString()));
 	}
-#elif defined(_WIN32)
+#elif defined(_WIN32) && !defined(USING_SDL)
 	MainWindow::BrowseAndBoot("");
 #endif
 	return UI::EVENT_DONE;

@@ -15,8 +15,9 @@
 // Official git repository and contact information can be found at
 // https://github.com/hrydgard/ppsspp and http://www.ppsspp.org/.
 
-#include <WinNls.h>
 #include "Common/CommonWindows.h"
+#include <WinNls.h>
+#include <shellapi.h>
 
 #include "file/vfs.h"
 #include "file/zip_read.h"
@@ -39,8 +40,9 @@
 #include "Windows/Debugger/Debugger_Disasm.h"
 #include "Windows/Debugger/Debugger_MemoryDlg.h"
 #include "Windows/Debugger/Debugger_VFPUDlg.h"
+#ifndef USING_GLES2
 #include "Windows/GEDebugger/GEDebugger.h"
-
+#endif
 #include "Windows/W32Util/DialogManager.h"
 
 #include "Windows/Debugger/CtrlDisAsmView.h"
@@ -51,7 +53,9 @@
 #include "Windows/main.h"
 
 CDisasm *disasmWindow[MAX_CPUCOUNT] = {0};
+#ifndef USING_GLES2
 CGEDebugger *geDebuggerWindow = 0;
+#endif
 CMemoryDlg *memoryWindow[MAX_CPUCOUNT] = {0};
 
 static std::string langRegion;
@@ -308,8 +312,9 @@ int WINAPI WinMain(HINSTANCE _hInstance, HINSTANCE hPrevInstance, LPSTR szCmdLin
 	CtrlDisAsmView::init();
 	CtrlMemView::init();
 	CtrlRegisterList::init();
+#ifndef USING_GLES2
 	CGEDebugger::Init();
-
+#endif
 	DialogManager::AddDlg(memoryWindow[0] = new CMemoryDlg(_hInstance, hwndMain, currentDebugMIPS));
 	DialogManager::AddDlg(vfpudlg = new CVFPUDlg(_hInstance, hwndMain, currentDebugMIPS));
 

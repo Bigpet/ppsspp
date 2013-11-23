@@ -15,6 +15,7 @@
 // Official git repository and contact information can be found at
 // https://github.com/hrydgard/ppsspp and http://www.ppsspp.org/.
 
+#ifndef USING_GLES2
 #include <WindowsX.h>
 #include "math/lin/matrix4x4.h"
 #include "gfx_es2/glsl_program.h"
@@ -457,3 +458,5 @@ LRESULT CALLBACK SimpleGLWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 	
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
+
+#endif

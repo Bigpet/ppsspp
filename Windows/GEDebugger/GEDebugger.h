@@ -16,7 +16,7 @@
 // https://github.com/hrydgard/ppsspp and http://www.ppsspp.org/.
 
 #pragma once
-
+#ifndef USING_GLES2
 #include "Common/CommonWindows.h"
 #include "Globals.h"
 #include "Windows/resource.h"
@@ -82,3 +82,5 @@ private:
 
 	int minWidth,minHeight;
 };
+
+#endif

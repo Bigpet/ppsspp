@@ -38,7 +38,9 @@
 #include "Windows/OpenGLBase.h"
 #include "Windows/Debugger/Debugger_Disasm.h"
 #include "Windows/Debugger/Debugger_MemoryDlg.h"
+#ifndef USING_GLES2
 #include "Windows/GEDebugger/GEDebugger.h"
+#endif
 #include "main.h"
 
 #include "Core/Core.h"
@@ -650,6 +652,7 @@ namespace MainWindow
 			osm.Show(g->T("Buffered Rendering"));
 			break;
 
+#ifndef USING_GLES2
 		case FB_READFBOMEMORY_CPU:
 			osm.Show(g->T("Read Framebuffer to Memory (CPU)"));
 			break;
@@ -657,6 +660,7 @@ namespace MainWindow
 		case FB_READFBOMEMORY_GPU:
 			osm.Show(g->T("Read Framebuffer to Memory (GPU)"));
 			break;
+#endif
 		}
 
 		NativeMessageReceived("gpu resized", "");
@@ -786,8 +790,10 @@ namespace MainWindow
 		DialogManager::AddDlg(disasmWindow[0]);
 		disasmWindow[0]->Show(g_Config.bShowDebuggerOnLoad);
 
+#ifndef USING_GLES2
 		geDebuggerWindow = new CGEDebugger(MainWindow::GetHInstance(), MainWindow::GetHWND());
 		DialogManager::AddDlg(geDebuggerWindow);
+#endif
 
 		memoryWindow[0] = new CMemoryDlg(MainWindow::GetHInstance(), MainWindow::GetHWND(), currentDebugMIPS);
 		DialogManager::AddDlg(memoryWindow[0]);
@@ -1246,9 +1252,10 @@ namespace MainWindow
 
 				case ID_OPTIONS_NONBUFFEREDRENDERING:   setRenderingMode(FB_NON_BUFFERED_MODE); break;
 				case ID_OPTIONS_BUFFEREDRENDERING:      setRenderingMode(FB_BUFFERED_MODE); break;
+#ifndef USING_GLES2
 				case ID_OPTIONS_READFBOTOMEMORYCPU:     setRenderingMode(FB_READFBOMEMORY_CPU); break;
 				case ID_OPTIONS_READFBOTOMEMORYGPU:     setRenderingMode(FB_READFBOMEMORY_GPU); break;
-
+#endif
 				// Dummy option to let the buffered rendering hotkey cycle through all the options.
 				case ID_OPTIONS_BUFFEREDRENDERINGDUMMY:
 					setRenderingMode();
@@ -1328,10 +1335,11 @@ namespace MainWindow
 				case ID_DEBUG_DISASSEMBLY:
 					disasmWindow[0]->Show(true);
 					break;
-
+#ifndef USING_GLES2
 				case ID_DEBUG_GEDEBUGGER:
 					geDebuggerWindow->Show(true);
 					break;
+#endif //USING_GLES2
 
 				case ID_DEBUG_MEMORYVIEW:
 					memoryWindow[0]->Show(true);

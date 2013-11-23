@@ -94,6 +94,7 @@
     <TargetName>PPSSPPDebug</TargetName>
     <IncludePath>..\dx9sdk\Include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(WindowsSDK_IncludePath);</IncludePath>
     <LibraryPath>..\dx9sdk\Lib\x86;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;$(WindowsSDK_LibraryPath_x86);</LibraryPath>
+    <ExecutablePath>C:\DEV\angle\angle\lib\Debug;$(ExecutablePath);$(MSBuildFrameworkToolsPath32);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>PPSSPPDebug64</TargetName>
@@ -108,17 +109,18 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>..\dx9sdk\Include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>..\dx9sdk\Lib\x86;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;$(WindowsSDK_LibraryPath_x86)</LibraryPath>
+    <ExecutablePath>C:\DEV\angle\angle\lib\Release;$(ExecutablePath);$(MSBuildFrameworkToolsPath32);</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USING_GLES2;WIN32;_DEBUG;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Sync</ExceptionHandling>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../common;..;../native;../native/ext/glew;../ext/zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\DEV\angle\angle\include;../common;..;../native;../native/ext/glew;../ext/zlib</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -127,7 +129,7 @@
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Winmm.lib;Ws2_32.lib;opengl32.lib;dsound.lib;glu32.lib;..\ffmpeg\Windows\x86\lib\avcodec.lib;..\ffmpeg\Windows\x86\lib\avformat.lib;..\ffmpeg\Windows\x86\lib\avutil.lib;..\ffmpeg\Windows\x86\lib\swresample.lib;..\ffmpeg\Windows\x86\lib\swscale.lib;comctl32.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libGLESv2.lib;libEGL.lib;Winmm.lib;Ws2_32.lib;opengl32.lib;dsound.lib;glu32.lib;..\ffmpeg\Windows\x86\lib\avcodec.lib;..\ffmpeg\Windows\x86\lib\avformat.lib;..\ffmpeg\Windows\x86\lib\avutil.lib;..\ffmpeg\Windows\x86\lib\swresample.lib;..\ffmpeg\Windows\x86\lib\swscale.lib;comctl32.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -137,6 +139,7 @@
       <BaseAddress>0x00400000</BaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
       <AdditionalOptions>/ignore:4049 /ignore:4217 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>C:\DEV\angle\angle\lib\Debug;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -179,7 +182,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USING_GLES2;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -189,16 +192,16 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../common;..;../native;../native/ext/glew;../ext/zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\DEV\angle\angle\include;../common;..;../native;../native/ext/glew;../ext/zlib</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Winmm.lib;Ws2_32.lib;opengl32.lib;dsound.lib;glu32.lib;..\ffmpeg\Windows\x86\lib\avcodec.lib;..\ffmpeg\Windows\x86\lib\avformat.lib;..\ffmpeg\Windows\x86\lib\avutil.lib;..\ffmpeg\Windows\x86\lib\swresample.lib;..\ffmpeg\Windows\x86\lib\swscale.lib;comctl32.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libGLESv2.lib;libEGL.lib;Winmm.lib;Ws2_32.lib;opengl32.lib;dsound.lib;glu32.lib;..\ffmpeg\Windows\x86\lib\avcodec.lib;..\ffmpeg\Windows\x86\lib\avformat.lib;..\ffmpeg\Windows\x86\lib\avutil.lib;..\ffmpeg\Windows\x86\lib\swresample.lib;..\ffmpeg\Windows\x86\lib\swscale.lib;comctl32.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\DEV\angle\angle\lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>

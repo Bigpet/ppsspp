@@ -15,6 +15,7 @@
 // Official git repository and contact information can be found at
 // https://github.com/hrydgard/ppsspp and http://www.ppsspp.org/.
 
+#ifndef USING_GLES2
 #include "math/lin/matrix4x4.h"
 #include "gfx_es2/glsl_program.h"
 #include "Windows/GEDebugger/GEDebugger.h"
@@ -228,3 +229,5 @@ void CGEDebugger::CleanupPrimPreview() {
 	glsl_destroy(previewProgram);
 	glsl_destroy(texPreviewProgram);
 }
+
+#endif

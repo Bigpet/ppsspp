@@ -63,6 +63,7 @@ option(MAEMO "Set to ON if targeting an Maemo (N900) device" ${MAEMO})
 option(IOS "Set to ON if targeting an iOS device" ${IOS})
 option(USING_GLES2 "Set to ON if target device uses OpenGL ES 2.0" ${USING_GLES2})
 option(USING_QT_UI "Set to ON if you wish to use the Qt frontend wrapper" ${USING_QT_UI})
+option(USING_QT5_UI "Set to ON if you wish to use the Qt frontend wrapper with QT5" ${USING_QT5_UI})
 option(HEADLESS "Set to OFF to not generate the PPSSPPHeadless target" ${HEADLESS})
 option(USE_FFMPEG "Build with FFMPEG support" ${USE_FFMPEG})
 
@@ -89,7 +90,9 @@ else()
 	set(CoreLinkType STATIC)
 endif()
 
-#find_package(Qt5Widgets)
+if(USING_QT5_UI)
+	cmake_policy(SET CMP0020 OLD)
+endif()
 if(USING_GLES2 AND NOT IOS)
 	set(OPENGL_LIBRARIES GLESv2)
 elseif(NOT IOS)
@@ -130,6 +133,8 @@ if(ARM)
 	add_definitions(-DARM)
 endif()
 if(USING_GLES2)
+	link_directories("C:/DEV/angle/angle/lib/Debug")
+	include_directories("C:/DEV/angle/angle/include")
 	add_definitions(-DUSING_GLES2)
 endif()
 
@@ -173,7 +178,6 @@ if(NOT MSVC)
 		# armv7s (without resorting to FastMemory) is still a work in progress
 		# comment out the next line to enable default/"standard" architectures (which is a fat armv7/armv7s binary)
 		set(CMAKE_OSX_ARCHITECTURES "armv7")
-		add_definitions(-DARMV7)
 	elseif(APPLE)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -U__STRICT_ANSI__")
 		# Karen/angelXwind: --macosx-version-min=10.7 is needed in order to produce binaries that OS X 10.7 Lion can execute. However, it seems that PPSSPP won't support 10.6 or lower without getting rid of -stdlib=libc++ ...which probably won't end well. So I guess PPSSPP will strictly be a 10.7+ app.
@@ -188,6 +192,8 @@ if(NOT MSVC)
 else()
 	# Disable warnings about MS-specific _s variants of libc functions
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+	add_definitions(-DUNICODE -D_UNICODE)
+	set(CMAKE_EXE_LINKER_FLAGS "/FIXED /BASE:\"0x00400000\" /DYNAMICBASE:NO ${CMAKE_EXE_LINKER_FLAGS}" )
 endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
@@ -347,7 +353,9 @@ endif()
 
 add_library(stb_image STATIC
 	native/ext/stb_image/stb_image.c
-	native/ext/stb_image/stb_image.h)
+	native/ext/stb_image/stb_image.h
+	native/ext/stb_image_write/stb_image_write.c
+	native/ext/stb_image_write/stb_image_writer.h)
 include_directories(native/ext/stb_image)
 
 add_library(stb_vorbis STATIC
@@ -446,36 +454,120 @@ elseif(IOS)
 	set(nativeExtraLibs ${nativeExtraLibs} "-framework Foundation -framework AudioToolbox -framework CoreGraphics -framework QuartzCore -framework OpenGLES -framework UIKit -framework GLKit -framework OpenAL")
 	set(TargetBin PPSSPP)
 elseif(USING_QT_UI)
-	# Currently unused
-	find_package(Qt4 COMPONENTS QtMultimedia QtOpenGL QtGui QtCore)
-	include(${QT_USE_FILE})
-	qt4_wrap_cpp(nativeQtHeader native/base/QtMain.h)
-	set(nativeExtra ${nativeExtra} native/base/QtMain.cpp ${nativeQtHeader})
-	set(nativeExtraLibs ${nativeExtraLibs} ${QT_LIBRARIES})
-	set(TargetBin PPSSPPQt)
-	if(APPLE)
-		set(nativeExtraLibs ${nativeExtraLibs} "-framework CoreFoundation")
+
+	set(ppssppqt_SOURCE_FILES 
+		Qt/QtHost.cpp
+		Qt/ctrldisasmview.cpp
+		Qt/ctrlmemview.cpp
+		Qt/ctrlregisterlist.cpp
+		Qt/ctrlvfpuview.cpp
+		Qt/debugger_disasm.cpp
+		Qt/debugger_displaylist.cpp
+		Qt/debugger_memory.cpp
+		Qt/debugger_memorytex.cpp
+		Qt/debugger_vfpu.cpp
+		Qt/mainwindow.cpp
+		Qt/qkeyedit.cpp
+		Qt/qtemugl.cpp)
+
+	set(ppssppqt_HEADER_FILES 
+		Qt/QtHost.h
+		Qt/ctrldisasmview.h
+		Qt/ctrlmemview.h
+		Qt/ctrlregisterlist.h
+		Qt/ctrlvfpuview.h
+		Qt/debugger_disasm.h
+		Qt/debugger_displaylist.h
+		Qt/debugger_memory.h
+		Qt/debugger_memorytex.h
+		Qt/debugger_vfpu.h
+		Qt/mainwindow.h
+		Qt/qkeyedit.h
+		Qt/qtemugl.h)
+		
+	set(ppssppqt_UI_FILES 
+		Qt/debugger_disasm.ui
+		Qt/debugger_displaylist.ui
+		Qt/debugger_memory.ui
+		Qt/debugger_memorytex.ui
+		Qt/debugger_vfpu.ui)
+
+	set(ppssppqt_RESOURCE_FILES 
+		Qt/resources.qrc
+		Qt/assets.qrc)
+
+	if(SDL_FOUND)
+		include_directories(${SDL_INCLUDE_DIR})
+		set(ppssppqt_SOURCE_FILES ${ppssppqt_SOURCE_FILES} SDL/SDLJoystick.cpp SDL/SDLJoystick.h)
+		set(nativeExtraLibs ${nativeExtraLibs} ${SDL_LIBRARY})
 	endif()
+	if(USING_QT5_UI)
+		# Currently unused
+		find_package(Qt5Core REQUIRED)
+		find_package(Qt5Widgets REQUIRED)
+		find_package(Qt5OpenGL REQUIRED)
+		find_package(Qt5Multimedia REQUIRED)
+		set(CMAKE_AUTOMOC ON)
+		#include(${QT_USE_FILE})
+		qt5_wrap_cpp(nativeQtHeader ${ppssppqt_HEADER_FILES})
+		qt5_add_resources(QtResources ${ppssppqt_RESOURCE_FILES})
+		qt5_wrap_ui(QtUiFiles ${ppssppqt_UI_FILES})
+		message(${QtUiFiles})
+		message(${QtResources})
+		include_directories(Qt)
+		include_directories(${CMAKE_CURRENT_BINARY_DIR})
+		include_directories(${Qt5Gui_INCLUDE_DIRS})
+		include_directories(${Qt5Core_INCLUDE_DIRS})
+		include_directories(${Qt5Widgets_INCLUDE_DIRS})
+		include_directories(${Qt5OpenGL_INCLUDE_DIRS})
+		include_directories(${Qt5Multimedia_INCLUDE_DIRS})
+		set(nativeExtra ${nativeExtra} native/base/QtMain.cpp ${nativeQtHeader} ${ppssppqt_SOURCE_FILES} ${QtUiFiles})
+		set(nativeExtraLibs ${nativeExtraLibs} ${QT_LIBRARIES})
+		set(TargetBin PPSSPPQt)
+		#add_executable()
+		#qt5_use_modules(nativeExtra Widgets OpenGL Multimedia)
+		add_definitions( -DUSING_QT_UI)
+		
+		if(APPLE)
+			set(nativeExtraLibs ${nativeExtraLibs} "-framework CoreFoundation")
+		endif()
+	else()
+		# Currently unused
+		find_package(Qt4 COMPONENTS QtMultimedia QtOpenGL QtGui QtCore)
+		include(${QT_USE_FILE})
+		qt4_wrap_cpp(nativeQtHeader native/base/QtMain.h)
+		set(nativeExtra ${nativeExtra} native/base/QtMain.cpp ${nativeQtHeader})
+		set(nativeExtraLibs ${nativeExtraLibs} ${QT_LIBRARIES})
+		set(TargetBin PPSSPPQt)
+		if(APPLE)
+			set(nativeExtraLibs ${nativeExtraLibs} "-framework CoreFoundation")
+		endif()
+	endif()
+
 elseif(BLACKBERRY)
 	set(nativeExtra ${nativeExtra} native/base/BlackberryMain.cpp native/base/BlackberryDisplay.cpp)
 	set(nativeExtraLibs ${nativeExtraLibs} OpenAL bps screen socket EGL)
 	set(TargetBin PPSSPPBlackberry)
 elseif(SDL_FOUND)
-	set(TargetBin PPSSPPSDL)
+	#set(TargetBin PPSSPPSDL)
 	# Require SDL
-	include_directories(${SDL_INCLUDE_DIR})
-	set(nativeExtra ${nativeExtra} 
-		SDL/SDLJoystick.h
-		SDL/SDLJoystick.cpp
-		native/base/PCMain.cpp)
-	set(nativeExtraLibs ${nativeExtraLibs} ${SDL_LIBRARY})
-	if(APPLE)
-		set(nativeExtra ${nativeExtra} SDL/SDLMain.h SDL/SDLMain.mm)
-		set(nativeExtraLibs ${nativeExtraLibs} ${COCOA_LIBRARY})
-	elseif(PANDORA OR MAEMO)
-		set(nativeExtraLibs ${nativeExtraLibs} pthread EGL X11)
-	endif()
-	set(TargetBin PPSSPPSDL)
+	#include_directories(${SDL_INCLUDE_DIR})
+	#add_definitions( -DUSING_SDL)
+	#set(nativeExtra ${nativeExtra} 
+	#	native/base/PCMain.cpp
+	#	SDL/SDLJoystick.cpp
+	#	SDL/SDLJoystick.h
+	#	Windows/W32Util/ShellUtil.cpp
+	#	Windows/W32Util/ShellUtil.h
+	#	)
+	#set(nativeExtraLibs ${nativeExtraLibs} ${SDL_LIBRARY})
+	#if(APPLE)
+	#	set(nativeExtra ${nativeExtra} SDL/SDLMain.h SDL/SDLMain.mm)
+	#	set(nativeExtraLibs ${nativeExtraLibs} ${COCOA_LIBRARY})
+	#elseif(PANDORA OR MAEMO)
+	#	set(nativeExtraLibs ${nativeExtraLibs} pthread EGL X11)
+	#endif()
+	#set(TargetBin PPSSPPSDL)
 else()
 	message(FATAL_ERROR "Could not find SDL. Failing.")
 endif()
@@ -972,72 +1064,9 @@ set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/git-version.cpp
 	PROPERTIES GENERATED TRUE)
 add_dependencies(${CoreLibName} GitVersion)
 
-if(BLACKBERRY OR IOS OR ARMEABI_V7A)
-	set(GPU_NEON GPU/Common/TextureDecoderNEON.cpp)
-endif()
-add_library(GPU OBJECT
-	GPU/Common/GPUDebugInterface.h
-	GPU/Common/VertexDecoderCommon.cpp
-	GPU/Common/VertexDecoderCommon.h
-	GPU/Common/IndexGenerator.cpp
-	GPU/Common/IndexGenerator.h
-	GPU/Common/TextureDecoder.cpp
-	GPU/Common/TextureDecoder.h
-	${GPU_NEON}
-	GPU/Common/PostShader.cpp
-	GPU/Common/PostShader.h
-	GPU/Common/SplineCommon.h
-	GPU/Debugger/Breakpoints.cpp
-	GPU/Debugger/Breakpoints.h
-	GPU/Debugger/Stepping.cpp
-	GPU/Debugger/Stepping.h
-	GPU/GLES/GLES_GPU.cpp
-	GPU/GLES/GLES_GPU.h
-	GPU/GLES/FragmentShaderGenerator.cpp
-	GPU/GLES/FragmentShaderGenerator.h
-	GPU/GLES/Framebuffer.cpp
-	GPU/GLES/Framebuffer.h
-	GPU/GLES/ShaderManager.cpp
-	GPU/GLES/ShaderManager.h
-	GPU/GLES/Spline.cpp
-	GPU/GLES/StateMapping.cpp
-	GPU/GLES/StateMapping.h
-	GPU/GLES/TextureCache.cpp
-	GPU/GLES/TextureCache.h
-	GPU/GLES/TextureScaler.cpp
-	GPU/GLES/TextureScaler.h
-	GPU/GLES/TransformPipeline.cpp
-	GPU/GLES/TransformPipeline.h
-	GPU/GLES/SoftwareTransform.cpp
-	GPU/GLES/VertexDecoder.cpp
-	GPU/GLES/VertexDecoder.h
-	GPU/GLES/VertexShaderGenerator.cpp
-	GPU/GLES/VertexShaderGenerator.h
-	GPU/GPUInterface.h
-	GPU/GeDisasm.cpp
-	GPU/GeDisasm.h
-	GPU/GPUCommon.cpp
-	GPU/GPUCommon.h
-	GPU/GPUState.cpp
-	GPU/GPUState.h
-	GPU/Math3D.cpp
-	GPU/Math3D.h
-	GPU/Null/NullGpu.cpp
-	GPU/Null/NullGpu.h
-	GPU/Software/Clipper.cpp
-	GPU/Software/Clipper.h
-	GPU/Software/Lighting.cpp
-	GPU/Software/Lighting.h
-	GPU/Software/Rasterizer.cpp
-	GPU/Software/Rasterizer.h
-	GPU/Software/SoftGpu.cpp
-	GPU/Software/SoftGpu.h
-	GPU/Software/TransformUnit.cpp
-	GPU/Software/TransformUnit.h
-	GPU/ge_constants.h)
-setup_target_project(GPU GPU)
-
 if(WIN32)
+
+#if(!USING_QT_UI)
 	add_executable(PPSSPPWindows WIN32
 		Windows/Breakpoints.h
 		Windows/DSoundStream.cpp
@@ -1109,10 +1138,117 @@ if(WIN32)
 	target_link_libraries(PPSSPPWindows ${CoreLibName}
 		kernel32 user32 gdi32 shell32 comctl32 dsound xinput)
 	setup_target_project(PPSSPPWindows Windows)
+#endif()
+	include_directories(dx9sdk/Include)
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+			set(PLATFORM_ARCH "x64")
+		else()
+			set(PLATFORM_ARCH "x86")
+		endif()
+	link_directories(dx9sdk/Lib/${PLATFORM_ARCH}/)
+	set(nativeExtraLibs ${nativeExtraLibs} d3d9 dinput8)
+	
+	set(GPUExtra ${GPUExtra} 
+		GPU/Directx9/FramebufferDX9.cpp
+		GPU/Directx9/FramebufferDX9.h
+		GPU/Directx9/GPU_DX9.cpp
+		GPU/Directx9/GPU_DX9.h
+		GPU/Directx9/PixelShaderGeneratorDX9.cpp
+		GPU/Directx9/PixelShaderGeneratorDX9.h
+		GPU/Directx9/ShaderManagerDX9.cpp
+		GPU/Directx9/ShaderManagerDX9.h
+		GPU/Directx9/SplineDX9.cpp
+		GPU/Directx9/StateMappingDX9.cpp
+		GPU/Directx9/StateMappingDX9.h
+		GPU/Directx9/TextureCacheDX9.cpp
+		GPU/Directx9/TextureCacheDX9.h
+		GPU/Directx9/TextureScalerDX9.cpp
+		GPU/Directx9/TextureScalerDX9.h
+		GPU/Directx9/TransformPipelineDX9.cpp
+		GPU/Directx9/TransformPipelineDX9.h
+		GPU/Directx9/VertexDecoderDX9.cpp
+		GPU/Directx9/VertexDecoderDX9.h
+		GPU/Directx9/VertexShaderGeneratorDX9.cpp
+		GPU/Directx9/VertexShaderGeneratorDX9.h
+		GPU/Directx9/helper/dx_state.cpp
+		GPU/Directx9/helper/dx_state.h
+		GPU/Directx9/helper/fbo.cpp
+		GPU/Directx9/helper/fbo.h
+		GPU/Directx9/helper/global.cpp
+		GPU/Directx9/helper/global.h
+	)
+
 endif()
 
+if(BLACKBERRY OR IOS OR ARMEABI_V7A)
+	set(GPU_NEON GPU/Common/TextureDecoderNEON.cpp)
+endif()
+
+add_library(GPU OBJECT
+	${GPUExtra}
+	GPU/Common/GPUDebugInterface.h
+	GPU/Common/VertexDecoderCommon.cpp
+	GPU/Common/VertexDecoderCommon.h
+	GPU/Common/IndexGenerator.cpp
+	GPU/Common/IndexGenerator.h
+	GPU/Common/TextureDecoder.cpp
+	GPU/Common/TextureDecoder.h
+	${GPU_NEON}
+	GPU/Common/PostShader.cpp
+	GPU/Common/PostShader.h
+	GPU/Common/SplineCommon.h
+	GPU/Debugger/Breakpoints.cpp
+	GPU/Debugger/Breakpoints.h
+	GPU/Debugger/Stepping.cpp
+	GPU/Debugger/Stepping.h
+	GPU/GLES/GLES_GPU.cpp
+	GPU/GLES/GLES_GPU.h
+	GPU/GLES/FragmentShaderGenerator.cpp
+	GPU/GLES/FragmentShaderGenerator.h
+	GPU/GLES/Framebuffer.cpp
+	GPU/GLES/Framebuffer.h
+	GPU/GLES/ShaderManager.cpp
+	GPU/GLES/ShaderManager.h
+	GPU/GLES/Spline.cpp
+	GPU/GLES/StateMapping.cpp
+	GPU/GLES/StateMapping.h
+	GPU/GLES/TextureCache.cpp
+	GPU/GLES/TextureCache.h
+	GPU/GLES/TextureScaler.cpp
+	GPU/GLES/TextureScaler.h
+	GPU/GLES/TransformPipeline.cpp
+	GPU/GLES/TransformPipeline.h
+	GPU/GLES/SoftwareTransform.cpp
+	GPU/GLES/VertexDecoder.cpp
+	GPU/GLES/VertexDecoder.h
+	GPU/GLES/VertexShaderGenerator.cpp
+	GPU/GLES/VertexShaderGenerator.h
+	GPU/GPUInterface.h
+	GPU/GeDisasm.cpp
+	GPU/GeDisasm.h
+	GPU/GPUCommon.cpp
+	GPU/GPUCommon.h
+	GPU/GPUState.cpp
+	GPU/GPUState.h
+	GPU/Math3D.cpp
+	GPU/Math3D.h
+	GPU/Null/NullGpu.cpp
+	GPU/Null/NullGpu.h
+	GPU/Software/Clipper.cpp
+	GPU/Software/Clipper.h
+	GPU/Software/Lighting.cpp
+	GPU/Software/Lighting.h
+	GPU/Software/Rasterizer.cpp
+	GPU/Software/Rasterizer.h
+	GPU/Software/SoftGpu.cpp
+	GPU/Software/SoftGpu.h
+	GPU/Software/TransformUnit.cpp
+	GPU/Software/TransformUnit.h
+	GPU/ge_constants.h)
+setup_target_project(GPU GPU)
+
 set(NativeAppSource
-	UI/NativeApp.cpp
+#	UI/NativeApp.cpp
 	UI/DevScreens.cpp
 	UI/EmuScreen.cpp
 	android/jni/TestRunner.cpp
@@ -1129,7 +1265,7 @@ set(NativeAppSource
 	UI/OnScreenDisplay.cpp
 	UI/ControlMappingScreen.cpp
 	UI/CwCheatScreen.cpp
-	UI/ui_atlas.cpp)
+	UI/ui_atlas_lowmem.cpp)
 if(ANDROID AND ARM)
 	set(NativeAppSource ${NativeAppSource} android/jni/ArmEmitterTest.cpp)
 endif()
@@ -1153,12 +1289,18 @@ if(USE_FFMPEG AND NOT DEFINED FFMPEG_BUILDDIR)
 		else()
 			set(PLATFORM_ARCH "linux/x86")
 		endif()
+	elseif(WIN32)
+		if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+			set(PLATFORM_ARCH "Windows/x86_64")
+		else()
+			set(PLATFORM_ARCH "Windows/x86")
+		endif()
 	endif()
 	# Using static libraries
 	if (DEFINED PLATFORM_ARCH)
 		include_directories(ffmpeg/${PLATFORM_ARCH}/include)
 		link_directories(ffmpeg/${PLATFORM_ARCH}/lib)
-		set(FFMPEG_LIBRARIES libavformat.a libavcodec.a libavutil.a libswresample.a libswscale.a)
+		set(FFMPEG_LIBRARIES avformat avcodec avutil swresample swscale)
 	else()
 		# Manual definition of system library locations by the user.
 		if (DEFINED FFMPEG_INCLUDE_PATH)
@@ -1191,6 +1333,7 @@ if(USE_FFMPEG AND NOT DEFINED FFMPEG_BUILDDIR)
 		endif()
 	endif(DEFINED PLATFORM_ARCH)
 endif(USE_FFMPEG AND NOT DEFINED FFMPEG_BUILDDIR)
+
 
 if(USE_FFMPEG)
 	# Using shared libraries
@@ -1231,7 +1374,6 @@ if(USE_FFMPEG)
 	set(LinkCommon ${LinkCommon} ${FFMPEG_LIBRARIES})
 	add_definitions(-DUSE_FFMPEG)
 endif(USE_FFMPEG)
-
 # Modification to show where we are pulling the ffmpeg libraries from.
 if(USE_FFMPEG AND DEFINED FFMPEG_LIBRARIES)
 	target_link_libraries(Common ${FFMPEG_LIBRARIES})
@@ -1274,10 +1416,16 @@ if(HEADLESS)
 endif()
 
 if (TargetBin)
+	if(USING_QT5_UI)
+		set(NativeAppSource ${NativeAppSource} ${QtResources})
+	endif()
 	if (IOS)
 		add_executable(${TargetBin} MACOSX_BUNDLE ${NativeAppSource})
 	else()
 		add_executable(${TargetBin} ${NativeAppSource})
+	endif()
+	if(USING_QT5_UI)
+		qt5_use_modules(${TargetBin} Widgets OpenGL Multimedia)
 	endif()
 	target_link_libraries(${TargetBin} ${LinkCommon})
 endif()

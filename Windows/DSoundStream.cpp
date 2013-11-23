@@ -1,5 +1,6 @@
 #include "native/thread/threadutil.h"
 #include "Common/CommonWindows.h"
+#include <Mmreg.h>
 #include <dsound.h>
 
 #include "dsoundstream.h"	

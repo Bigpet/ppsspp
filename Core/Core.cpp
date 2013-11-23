@@ -45,7 +45,7 @@ static recursive_mutex m_hInactiveMutex;
 static bool singleStepPending = false;
 static std::set<Core_ShutdownFunc> shutdownFuncs;
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(USING_SDL) && !defined(USING_QT_UI)
 InputState input_state;
 #else
 extern InputState input_state;
@@ -145,7 +145,7 @@ void Core_RunLoop() {
 	while (globalUIState != UISTATE_INGAME && globalUIState != UISTATE_EXIT) {
 		time_update();
 
-#if defined(_WIN32) && !defined(USING_QT_UI)
+#if defined(_WIN32) && !defined(USING_QT_UI) && !defined(USING_SDL)
 		double startTime = time_now_d();
 		UpdateRunLoop();
 
@@ -164,7 +164,7 @@ void Core_RunLoop() {
 	while (!coreState && globalUIState == UISTATE_INGAME) {
 		time_update();
 		UpdateRunLoop();
-#if defined(_WIN32) && !defined(USING_QT_UI)
+#if defined(_WIN32) && !defined(USING_QT_UI) && !defined(USING_SDL)
 		if (!Core_IsStepping()) {
 			GL_SwapBuffers();
 		}

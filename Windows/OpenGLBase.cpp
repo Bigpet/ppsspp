@@ -5,8 +5,10 @@
 #include "native/gfx_es2/gl_state.h"
 #include "native/gfx/gl_common.h"
 #include "util/text/utf8.h"
+#ifndef USING_GLES2
 #include "GL/gl.h"
 #include "GL/wglew.h"
+#endif
 #include "util/text/utf8.h"
 #include "i18n/i18n.h"
 
@@ -15,6 +17,12 @@
 static HDC hDC;     // Private GDI Device Context
 static HGLRC hRC;   // Permanent Rendering Context
 static HWND hWnd;   // Holds Our Window Handle
+
+#ifdef USING_GLES2
+static EGLDisplay disp;
+static EGLSurface egl_surface;
+static EGLContext egl_context;
+#endif
 
 static int xres, yres;
 
@@ -36,11 +44,16 @@ void GL_Resized() {
 }
 
 void GL_SwapBuffers() {
+#ifdef USING_GLES2
+	eglSwapBuffers(disp, egl_surface);
+#else
 	SwapBuffers(hDC);
+#endif
 }
 
 void FormatDebugOutputARB(char outStr[], size_t outStrSize, GLenum source, GLenum type,
 													GLuint id, GLenum severity, const char *msg) {
+#ifndef USING_GLES2
 	char sourceStr[32];
 	const char *sourceFmt = "UNDEFINED(0x%04X)";
 	switch(source) {
@@ -77,20 +90,85 @@ void FormatDebugOutputARB(char outStr[], size_t outStrSize, GLenum source, GLenu
 	_snprintf(severityStr, 32, severityFmt, severity);
 
 	_snprintf(outStr, outStrSize, "OpenGL: %s [source=%s type=%s severity=%s id=%d]", msg, sourceStr, typeStr, severityStr, id);
+#endif
 }
 
 void DebugCallbackARB(GLenum source, GLenum type, GLuint id, GLenum severity,
 											GLsizei length, const GLchar *message, GLvoid *userParam) {
+#ifndef USING_GLES2
 	(void)length;
 	FILE *outFile = (FILE*)userParam;
 	char finalMessage[256];
 	FormatDebugOutputARB(finalMessage, 256, source, type, id, severity, message);
 	ERROR_LOG(G3D, "GL: %s", finalMessage);
+#endif
 }
 
 bool GL_Init(HWND window, std::string *error_message) {
 	*error_message = "ok";
 	hWnd = window;
+
+#ifdef USING_GLES2
+	hDC = GetDC(hWnd);
+
+	disp = eglGetDisplay(hDC);
+	if ( disp == EGL_NO_DISPLAY ) {
+		*error_message = "Got no EGL display.";
+		return false;
+	}
+
+	if ( !eglInitialize( disp, NULL, NULL ) ) {
+		*error_message = "Unable to initialize EGL";
+		return false;
+	}
+
+	EGLint attr[] = {       // some attributes to set up our egl-interface
+		EGL_BUFFER_SIZE, 24,
+		EGL_RENDERABLE_TYPE,EGL_OPENGL_ES2_BIT,
+		EGL_DEPTH_SIZE, 16,
+		EGL_BIND_TO_TEXTURE_RGBA, EGL_TRUE,
+		EGL_NONE
+	};
+
+	EGLConfig  ecfg;
+	EGLint     num_config;
+	if ( !eglChooseConfig( disp, attr, &ecfg, 1, &num_config ) ) {
+		*error_message = "Failed to choose config (eglError: )";
+		return false;
+	}
+
+	if ( num_config != 1 ) {
+		*error_message =  "Didn't get exactly one config, but ";
+		return false;
+	}
+
+	egl_surface = eglCreateWindowSurface ( disp, ecfg, hWnd, NULL );
+	if ( egl_surface == EGL_NO_SURFACE ) {
+		*error_message = "Unable to create EGL surface (eglError: )";
+		return false;
+	}
+
+	//// egl-contexts collect all state descriptions needed required for operation
+	EGLint ctxattr[] = {
+		EGL_CONTEXT_CLIENT_VERSION, 2,
+		EGL_NONE
+	};
+	egl_context = eglCreateContext ( disp, ecfg, EGL_NO_CONTEXT, ctxattr );
+	if ( egl_context == EGL_NO_CONTEXT ) {
+		*error_message = "Unable to create EGL context (eglError: )";
+		return false;
+	}
+
+	//// associate the egl-context with the egl-surface
+	eglMakeCurrent( disp, egl_surface, egl_surface, egl_context );
+
+	CheckGLExtensions();
+
+	glstate.Initialize();
+	GL_Resized();
+
+	return true;
+#else
 	GLuint PixelFormat;
 
 	// TODO: Change to use WGL_ARB_pixel_format instead
@@ -233,6 +311,7 @@ bool GL_Init(HWND window, std::string *error_message) {
 
 	GL_Resized();								// Set up our perspective GL screen
 	return true;												// Success
+#endif
 }
 
 void GL_Shutdown() { 

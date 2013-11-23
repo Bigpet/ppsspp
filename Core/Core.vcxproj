@@ -66,8 +66,8 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\ffmpeg\WindowsInclude;..\ffmpeg\Windows\x86\include;../common;..;../native;../native/ext/glew;../ext/zlib</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>USE_FFMPEG;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\DEV\angle\angle\include;..\ffmpeg\WindowsInclude;..\ffmpeg\Windows\x86\include;../common;..;../native;../native/ext/glew;../ext/zlib</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>USING_GLES2;USE_FFMPEG;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -109,11 +109,11 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\ffmpeg\WindowsInclude;..\ffmpeg\Windows\x86\include;../common;..;../native;../native/ext/glew;../ext/zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\DEV\angle\angle\include;..\ffmpeg\WindowsInclude;..\ffmpeg\Windows\x86\include;../common;..;../native;../native/ext/glew;../ext/zlib</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <PreprocessorDefinitions>USE_FFMPEG;_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USING_GLES2;USE_FFMPEG;_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>

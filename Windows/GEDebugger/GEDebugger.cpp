@@ -15,6 +15,7 @@
 // Official git repository and contact information can be found at
 // https://github.com/hrydgard/ppsspp and http://www.ppsspp.org/.
 
+#ifndef USING_GLES2
 #include <vector>
 #include <string>
 #include <set>
@@ -471,3 +472,5 @@ void WindowsHost::GPUNotifyTextureAttachment(u32 addr) {
 bool WindowsHost::GPUAllowTextureCache(u32 addr) {
 	return textureCaching;
 }
+
+#endif

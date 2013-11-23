@@ -1,3 +1,5 @@
+#ifndef USING_GLES2
+
 #include "Windows/GEDebugger/TabDisplayLists.h"
 #include "Windows/GEDebugger/GEDebugger.h"
 #include "Windows/GEDebugger/CtrlDisplayListView.h"
@@ -272,3 +274,5 @@ BOOL TabDisplayLists::DlgProc(UINT message, WPARAM wParam, LPARAM lParam) {
 
 	return FALSE;
 }
+
+#endif
