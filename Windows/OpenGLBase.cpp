@@ -19,7 +19,7 @@ static HGLRC hRC;   // Permanent Rendering Context
 static HWND hWnd;   // Holds Our Window Handle
 
 #ifdef USING_GLES2
-static EGLDisplay disp;
+EGLDisplay disp;
 static EGLSurface egl_surface;
 static EGLContext egl_context;
 #endif
@@ -158,7 +158,7 @@ bool GL_Init(HWND window, std::string *error_message) {
 		*error_message = "Unable to create EGL context (eglError: )";
 		return false;
 	}
-
+	eglSwapInterval(disp, 0);
 	//// associate the egl-context with the egl-surface
 	eglMakeCurrent( disp, egl_surface, egl_surface, egl_context );
 
