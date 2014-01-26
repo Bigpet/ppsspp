@@ -429,6 +429,43 @@ void SoftGPU::ExecuteOp(u32 op, u32 diff)
 			int bz_ucount = data & 0xFF;
 			int bz_vcount = (data >> 8) & 0xFF;
 			DEBUG_LOG(G3D,"DL DRAW BEZIER: %i x %i", bz_ucount, bz_vcount);
+
+			if (gstate_c.skipDrawReason & (SKIPDRAW_SKIPFRAME | SKIPDRAW_NON_DISPLAYED_FB))	{
+				// TODO: Should this eat some cycles?  Probably yes.  Not sure if important.
+				return;
+			}
+
+			if (!Memory::IsValidAddress(gstate_c.vertexAddr)) {
+				ERROR_LOG_REPORT(G3D, "Bad vertex address %08x!", gstate_c.vertexAddr);
+				break;
+			}
+
+			void *control_points = Memory::GetPointerUnchecked(gstate_c.vertexAddr);
+			void *indices = NULL;
+			if ((gstate.vertType & GE_VTYPE_IDX_MASK) != GE_VTYPE_IDX_NONE) {
+				if (!Memory::IsValidAddress(gstate_c.indexAddr)) {
+					ERROR_LOG_REPORT(G3D, "Bad index address %08x!", gstate_c.indexAddr);
+					break;
+				}
+				indices = Memory::GetPointerUnchecked(gstate_c.indexAddr);
+			}
+
+			if (gstate.getPatchPrimitiveType() != GE_PATCHPRIM_TRIANGLES) {
+				ERROR_LOG_REPORT(G3D, "Unsupported patch primitive %x", gstate.getPatchPrimitiveType());
+				break;
+			}
+
+			if (gstate.vertType & GE_VTYPE_MORPHCOUNT_MASK) {
+				DEBUG_LOG_REPORT(G3D, "Bezier + morph: %i", (gstate.vertType & GE_VTYPE_MORPHCOUNT_MASK) >> GE_VTYPE_MORPHCOUNT_SHIFT);
+			}
+			if (vertTypeIsSkinningEnabled(gstate.vertType)) {
+				DEBUG_LOG_REPORT(G3D, "Bezier + skinning: %i", vertTypeGetNumBoneWeights(gstate.vertType));
+			}
+
+			GEPatchPrimType patchPrim = gstate.getPatchPrimitiveType();
+			TransformUnit::SubmitBezier(control_points, indices, bz_ucount, bz_vcount, patchPrim, gstate.vertType);
+			//TransformUnit::SubmitSpline(control_points, indices, bz_ucount, bz_vcount, sp_utype, sp_vtype, gstate.getPatchPrimitiveType(), gstate.vertType);
+			framebufferDirty_ = true;
 		}
 		break;
 
