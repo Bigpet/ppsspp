@@ -62,6 +62,7 @@
 #include "Windows/W32Util/ShellUtil.h"
 #include "Windows/W32Util/Misc.h"
 #include "Windows/RawInput.h"
+#include "Windows/TouchInputHandler.h"
 #include "GPU/GPUInterface.h"
 #include "GPU/GPUState.h"
 #include "gfx_es2/gpu_features.h"
@@ -78,7 +79,7 @@
 #include "XPTheme.h"
 #endif
 
-#define ENABLE_TOUCH 0
+#define MOUSEEVENTF_FROMTOUCH 0xFF515700
 
 static const int numCPUs = 1;
 
@@ -116,6 +117,7 @@ namespace MainWindow
 	HWND hwndMain;
 	HWND hwndDisplay;
 	HWND hwndGameList;
+	TouchInputHandler touchHandler;
 	static HMENU menu;
 
 	static HINSTANCE hInst;
@@ -223,12 +225,13 @@ namespace MainWindow
 		// Round up to a zoom factor for the render size.
 		int zoom = g_Config.iInternalResolution;
 		if (zoom == 0) // auto mode
+		{
 			zoom = (rc.right - rc.left + 479) / 480;
-
-		PSP_CoreParameter().renderWidth = 480 * zoom;
-		PSP_CoreParameter().renderHeight = 272 * zoom;
-		PSP_CoreParameter().outputWidth = 480 * zoom;
-		PSP_CoreParameter().outputHeight = 272 * zoom;
+			PSP_CoreParameter().renderWidth = 480 * zoom;
+			PSP_CoreParameter().renderHeight = 272 * zoom;
+			PSP_CoreParameter().outputWidth = 480 * zoom;
+			PSP_CoreParameter().outputHeight = 272 * zoom;
+		}
 		
 		if (displayOSM) {
 			I18NCategory *g = GetI18NCategory("Graphics");
@@ -257,6 +260,7 @@ namespace MainWindow
 				g_Config.iInternalResolution = 0;
 		}
 		
+		// Taking auto-texture scaling into account
 		if (g_Config.iTexScalingLevel == TEXSCALING_AUTO)
 			setTexScalingMultiplier(0);
 
@@ -789,9 +793,7 @@ namespace MainWindow
 
 		W32Util::MakeTopMost(hwndMain, g_Config.bTopMost);
 
-#if ENABLE_TOUCH
-		RegisterTouchWindow(hwndDisplay, TWF_WANTPALM);
-#endif
+		touchHandler.registerTouchWindow(hwndDisplay);
 
 		WindowsRawInput::Init();
 
@@ -905,6 +907,8 @@ namespace MainWindow
 		// and as asynchronous touch events for minimal latency.
 
 		case WM_LBUTTONDOWN:
+			if (!touchHandler.hasTouch() ||
+				(GetMessageExtraInfo() & MOUSEEVENTF_FROMTOUCH) != MOUSEEVENTF_FROMTOUCH ) 
 			{
 				// Hack: Take the opportunity to show the cursor.
 				mouseButtonDown = true;
@@ -929,6 +933,8 @@ namespace MainWindow
 			break;
 
 		case WM_MOUSEMOVE:
+			if (!touchHandler.hasTouch() ||
+				(GetMessageExtraInfo() & MOUSEEVENTF_FROMTOUCH) != MOUSEEVENTF_FROMTOUCH)
 			{
 				// Hack: Take the opportunity to show the cursor.
 				mouseButtonDown = (wParam & MK_LBUTTON) != 0;
@@ -959,6 +965,8 @@ namespace MainWindow
 			break;
 
 		case WM_LBUTTONUP:
+			if (!touchHandler.hasTouch() ||
+				(GetMessageExtraInfo() & MOUSEEVENTF_FROMTOUCH) != MOUSEEVENTF_FROMTOUCH)
 			{
 				// Hack: Take the opportunity to hide the cursor.
 				mouseButtonDown = false;
@@ -978,37 +986,10 @@ namespace MainWindow
 			}
 			break;
 
-		// Actual touch! Unfinished...
-
 		case WM_TOUCH:
 			{
-				// TODO: Enabling this section will probably break things on Windows XP.
-				// We probably need to manually fetch pointers to GetTouchInputInfo and CloseTouchInputHandle.
-#if ENABLE_TOUCH
-				UINT inputCount = LOWORD(wParam);
-				TOUCHINPUT *inputs = new TOUCHINPUT[inputCount];
-				if (GetTouchInputInfo((HTOUCHINPUT)lParam,
-					inputCount,
-					inputs,
-					sizeof(TOUCHINPUT)))
-				{
-					for (int i = 0; i < inputCount; i++) {
-						// TODO: process inputs here!
-
-					}
-
-					if (!CloseTouchInputHandle((HTOUCHINPUT)lParam))
-					{
-						// Error handling.
-					}
-				}
-				else
-				{
-					// GetLastError() and error handling.
-				}
-				delete [] inputs;
+				touchHandler.handleTouchEvent(hWnd, message, wParam, lParam);
 				return DefWindowProc(hWnd, message, wParam, lParam);
-#endif
 			}
 
 		case WM_PAINT:
